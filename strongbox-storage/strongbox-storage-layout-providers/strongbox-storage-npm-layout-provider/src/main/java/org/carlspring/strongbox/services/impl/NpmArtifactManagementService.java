@@ -36,17 +36,6 @@ public class NpmArtifactManagementService
     }
 
     @Override
-    public void removeTimestampedSnapshots(String storageId,
-                                           String repositoryId,
-                                           String artifactPath,
-                                           int numberToKeep,
-                                           int keepPeriod)
-            throws IOException
-    {
-        throw new UnsupportedOperationException("This operation is not yet implemented!");
-    }
-
-    @Override
     public Storage getStorage(String storageId)
     {
         return getConfiguration().getStorages().get(storageId);

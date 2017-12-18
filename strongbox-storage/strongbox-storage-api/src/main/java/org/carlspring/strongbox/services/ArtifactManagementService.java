@@ -59,13 +59,6 @@ public interface ArtifactManagementService extends ConfigurationService
               String path)
             throws IOException;
 
-    void removeTimestampedSnapshots(String storageId,
-                                    String repositoryId,
-                                    String artifactPath,
-                                    int numberToKeep,
-                                    int keepPeriod)
-            throws IOException;
-
     Storage getStorage(String storageId);
     
 }
