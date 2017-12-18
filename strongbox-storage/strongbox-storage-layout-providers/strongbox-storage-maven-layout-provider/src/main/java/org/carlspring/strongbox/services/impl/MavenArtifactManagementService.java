@@ -39,55 +39,6 @@ public class MavenArtifactManagementService
     private LayoutProviderRegistry layoutProviderRegistry;
 
 
-    @Override
-    public boolean contains(String storageId, String repositoryId, String artifactPath)
-            throws IOException
-    {
-        final Storage storage = getStorage(storageId);
-        final Repository repository = storage.getRepository(repositoryId);
-
-        try
-        {
-            LayoutProvider layoutProvider = getLayoutProvider(repository, layoutProviderRegistry);
-
-            return layoutProvider.contains(storageId, repositoryId, artifactPath);
-        }
-        catch (IOException | ProviderImplementationException e)
-        {
-            throw new ArtifactStorageException(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void copy(String srcStorageId,
-                     String srcRepositoryId,
-                     String destStorageId,
-                     String destRepositoryId,
-                     String path)
-            throws IOException
-    {
-        artifactOperationsValidator.validate(srcStorageId, srcRepositoryId, path);
-
-        final Storage srcStorage = getStorage(srcStorageId);
-        final Repository srcRepository = srcStorage.getRepository(srcRepositoryId);
-
-        final Storage destStorage = getStorage(destStorageId);
-        final Repository destRepository = destStorage.getRepository(destRepositoryId);
-
-        File srcFile = new File(srcRepository.getBasedir(), path);
-        File destFile = new File(destRepository.getBasedir(), path);
-
-        if (srcFile.isDirectory())
-        {
-            FileUtils.copyDirectoryToDirectory(srcFile, destFile.getParentFile());
-        }
-        else
-        {
-            FileUtils.copyFile(srcFile, destFile);
-        }
-    }
-
-    @Override
     public void removeTimestampedSnapshots(String storageId,
                                            String repositoryId,
                                            String artifactPath,
