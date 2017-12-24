@@ -46,6 +46,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
           Maven2LayoutProviderConfig.class,
           NugetLayoutProviderConfig.class,
           NpmLayoutProviderConfig.class,
+          RawLayoutProviderConfig.class,
           StorageCoreConfig.class,
           SecurityConfig.class,
           ClientConfig.class,
