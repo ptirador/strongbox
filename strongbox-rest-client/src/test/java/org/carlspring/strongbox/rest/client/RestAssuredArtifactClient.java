@@ -44,6 +44,9 @@ public class RestAssuredArtifactClient
 
     private String contextBaseUrl;
 
+    private String userAgent;
+
+
     @Override
     public String getContextBaseUrl()
     {
@@ -125,7 +128,7 @@ public class RestAssuredArtifactClient
 
     private MockMvcRequestSpecification givenLocal()
     {
-        return RestAssuredMockMvc.given().header("User-Agent", "Maven/*");
+        return RestAssuredMockMvc.given().header("User-Agent", userAgent);
     }
 
     public MockMvcResponse put2(String relativeUrl,
@@ -354,7 +357,9 @@ public class RestAssuredArtifactClient
 
         query = URLEncoder.encode(query, "UTF-8");
 
-        return givenLocal().params("repositoryId", repositoryId, "q", query, "searchProvider", searchProvider)
+        return givenLocal().params("repositoryId", repositoryId,
+                                   "q", query,
+                                   "searchProvider", searchProvider)
                            .header("accept", mediaType)
                            .when()
                            .get(url)
@@ -364,6 +369,16 @@ public class RestAssuredArtifactClient
                            .response()
                            .getBody()
                            .asString();
+    }
+
+    public String getUserAgent()
+    {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent)
+    {
+        this.userAgent = userAgent;
     }
 
 }
