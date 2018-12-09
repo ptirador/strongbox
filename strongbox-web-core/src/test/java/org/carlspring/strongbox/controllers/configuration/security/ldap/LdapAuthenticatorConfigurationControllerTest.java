@@ -1,14 +1,13 @@
 package org.carlspring.strongbox.controllers.configuration.security.ldap;
 
 import org.carlspring.strongbox.authentication.ConfigurableProviderManager;
-import org.carlspring.strongbox.authentication.api.AuthenticationItem;
-import org.carlspring.strongbox.authentication.api.AuthenticationItems;
 import org.carlspring.strongbox.authentication.api.ldap.LdapAuthenticationConfigurationManager;
 import org.carlspring.strongbox.authentication.api.ldap.LdapConfiguration;
+import org.carlspring.strongbox.authentication.registry.AuthenticationResourceManager;
 import org.carlspring.strongbox.authentication.support.ExternalRoleMapping;
+import org.carlspring.strongbox.config.IntegrationTest;
 import org.carlspring.strongbox.config.hazelcast.HazelcastConfiguration;
 import org.carlspring.strongbox.config.hazelcast.HazelcastInstanceId;
-import org.carlspring.strongbox.config.IntegrationTest;
 import org.carlspring.strongbox.forms.configuration.security.ldap.LdapConfigurationTestForm;
 import org.carlspring.strongbox.rest.common.RestAssuredBaseTest;
 
@@ -21,15 +20,22 @@ import java.util.stream.Stream;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Disabled;
-import org.springframework.context.annotation.*;
+import org.junit.jupiter.api.parallel.Execution;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportResource;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
-
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 /**
  * @author Przemyslaw Fusik
@@ -37,7 +43,9 @@ import static org.hamcrest.CoreMatchers.startsWith;
  * @author sbespalov
  */
 @IntegrationTest
-@ActiveProfiles({"LdapAuthenticatorConfigurationControllerTest","test"})
+@ActiveProfiles({ "LdapAuthenticatorConfigurationControllerTest",
+                  "test" })
+@Execution(SAME_THREAD)
 public class LdapAuthenticatorConfigurationControllerTest
         extends RestAssuredBaseTest
 {
@@ -51,7 +59,7 @@ public class LdapAuthenticatorConfigurationControllerTest
     @Override
     @BeforeEach
     public void init()
-        throws Exception
+            throws Exception
     {
         super.init();
 
@@ -76,9 +84,10 @@ public class LdapAuthenticatorConfigurationControllerTest
     @Test
     public void shouldReturnProperLdapConfiguration()
     {
+        String url = getContextBaseUrl();
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .when()
-               .get(getContextBaseUrl())
+               .get(url)
                .peek()
                .then()
                .body("url", startsWith("ldap://127.0.0.1"))
@@ -100,9 +109,10 @@ public class LdapAuthenticatorConfigurationControllerTest
                .statusCode(HttpStatus.OK.value());
     }
 
+
     @WithMockUser(authorities = "ADMIN")
     @Test
-    public void shouldUpdateFullLdapConfiguration()      
+    public void shouldUpdateFullLdapConfiguration()
     {
         LdapConfiguration configuration = ldapAuthenticationConfigurationManager.getConfiguration();
 
@@ -115,18 +125,19 @@ public class LdapAuthenticatorConfigurationControllerTest
         configuration.getUserDnPatternList().add("uid={0},ou=AllUsers");
         configuration.setUrl("ldap://127.0.0.1:33389/dc=carlspring,dc=com");
 
+        String url = getContextBaseUrl();
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(configuration)
                .when()
-               .put(getContextBaseUrl())
+               .put(url)
                .peek()
                .then()
                .statusCode(HttpStatus.OK.value());
 
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .when()
-               .get(getContextBaseUrl())
+               .get(url)
                .peek()
                .then()
                .body("url", equalTo("ldap://127.0.0.1:33389/dc=carlspring,dc=com"))
@@ -151,6 +162,9 @@ public class LdapAuthenticatorConfigurationControllerTest
                .body("userDnPatternList[0]", equalTo("uid={0},ou=Users"))
                .body("userDnPatternList[1]", equalTo("uid={0},ou=AllUsers"))
                .statusCode(HttpStatus.OK.value());
+
+        // rollback
+        providerManager.reload();
     }
 
     @WithMockUser(authorities = "ADMIN")
@@ -163,11 +177,12 @@ public class LdapAuthenticatorConfigurationControllerTest
 
         form.getConfiguration().setUrl(null);
 
+        String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
                .when()
-               .put(getContextBaseUrl() + "/test")
+               .put(url)
                .peek()
                .then()
                .statusCode(HttpStatus.BAD_REQUEST.value())
@@ -185,11 +200,12 @@ public class LdapAuthenticatorConfigurationControllerTest
 
         form.getConfiguration().setUrl("http://host:port?thisIsWrongUrl=true");
 
+        String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
                .when()
-               .put(getContextBaseUrl() + "/test")
+               .put(url)
                .peek()
                .then()
                .statusCode(HttpStatus.BAD_REQUEST.value())
@@ -213,11 +229,12 @@ public class LdapAuthenticatorConfigurationControllerTest
         subform.getUserSearch().setUserSearchBase("ou=Employee");
         subform.getUserSearch().setUserSearchFilter("(employee={0})");
 
+        String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
                .when()
-               .put(getContextBaseUrl() + "/test")
+               .put(url)
                .peek()
                .then()
                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
@@ -235,11 +252,12 @@ public class LdapAuthenticatorConfigurationControllerTest
         form.setUsername("mtodorov");
         form.setPassword("password");
 
+        String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
                .when()
-               .put(getContextBaseUrl() + "/test")
+               .put(url)
                .peek()
                .then()
                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
@@ -254,11 +272,12 @@ public class LdapAuthenticatorConfigurationControllerTest
         form.setUsername("daddy");
         form.setPassword("mummy");
 
+        String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
                .when()
-               .put(getContextBaseUrl() + "/test")
+               .put(url)
                .peek()
                .then()
                .statusCode(HttpStatus.OK.value())
@@ -273,11 +292,12 @@ public class LdapAuthenticatorConfigurationControllerTest
         form.setUsername("mtodorov");
         form.setPassword("password");
 
+        String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
                .when()
-               .put(getContextBaseUrl() + "/test")
+               .put(url)
                .peek()
                .then()
                .statusCode(HttpStatus.OK.value())
@@ -412,11 +432,12 @@ public class LdapAuthenticatorConfigurationControllerTest
                                           new ExternalRoleMapping("LogsManager", "LOGS_MANAGER"))
                                       .collect(Collectors.toList()));
 
+        String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
                .when()
-               .put(getContextBaseUrl() + "/test")
+               .put(url)
                .peek()
                .then()
                .statusCode(HttpStatus.OK.value())
@@ -430,6 +451,7 @@ public class LdapAuthenticatorConfigurationControllerTest
         LdapConfigurationTestForm form = new LdapConfigurationTestForm();
 
         LdapConfiguration configuration = ldapAuthenticationConfigurationManager.getConfiguration();
+
         form.setConfiguration(configuration);
         form.getConfiguration().setManagerDn("uid=admin,ou=system");
         form.getConfiguration().setManagerPassword("secret");
@@ -450,6 +472,24 @@ public class LdapAuthenticatorConfigurationControllerTest
             return new HazelcastInstanceId("LdapAuthenticatorConfigurationControllerTest-hazelcast-instance");
         }
 
+        @Bean
+        @Primary
+        public AuthenticationResourceManager testAuthenticationResourceManager()
+        {
+            return new TestAuthenticationResourceManager();
+        }
+
+    }
+
+    private static class TestAuthenticationResourceManager
+            extends AuthenticationResourceManager
+    {
+
+        @Override
+        public Resource getAuthenticationPropertiesResource()
+        {
+            return new DefaultResourceLoader().getResource("classpath:ldap-strongbox-authentication-providers.yaml");
+        }
     }
 
 }
