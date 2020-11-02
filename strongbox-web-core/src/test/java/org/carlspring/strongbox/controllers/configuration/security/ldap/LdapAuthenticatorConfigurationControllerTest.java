@@ -1,6 +1,8 @@
 package org.carlspring.strongbox.controllers.configuration.security.ldap;
 
 import org.carlspring.strongbox.authentication.ConfigurableProviderManager;
+import org.carlspring.strongbox.authentication.api.AuthenticationItem;
+import org.carlspring.strongbox.authentication.api.AuthenticationItems;
 import org.carlspring.strongbox.authentication.api.ldap.LdapAuthenticationConfigurationManager;
 import org.carlspring.strongbox.authentication.api.ldap.LdapConfiguration;
 import org.carlspring.strongbox.authentication.registry.AuthenticationResourceManager;
@@ -84,7 +86,7 @@ public class LdapAuthenticatorConfigurationControllerTest
     @Test
     public void shouldReturnProperLdapConfiguration()
     {
-        String url = getContextBaseUrl();
+        final String url = getContextBaseUrl();
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .when()
                .get(url)
@@ -109,7 +111,6 @@ public class LdapAuthenticatorConfigurationControllerTest
                .statusCode(HttpStatus.OK.value());
     }
 
-
     @WithMockUser(authorities = "ADMIN")
     @Test
     public void shouldUpdateFullLdapConfiguration()
@@ -125,7 +126,7 @@ public class LdapAuthenticatorConfigurationControllerTest
         configuration.getUserDnPatternList().add("uid={0},ou=AllUsers");
         configuration.setUrl("ldap://127.0.0.1:33389/dc=carlspring,dc=com");
 
-        String url = getContextBaseUrl();
+        final String url = getContextBaseUrl();
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(configuration)
@@ -162,9 +163,6 @@ public class LdapAuthenticatorConfigurationControllerTest
                .body("userDnPatternList[0]", equalTo("uid={0},ou=Users"))
                .body("userDnPatternList[1]", equalTo("uid={0},ou=AllUsers"))
                .statusCode(HttpStatus.OK.value());
-
-        // rollback
-        providerManager.reload();
     }
 
     @WithMockUser(authorities = "ADMIN")
@@ -177,7 +175,7 @@ public class LdapAuthenticatorConfigurationControllerTest
 
         form.getConfiguration().setUrl(null);
 
-        String url = getContextBaseUrl() + "/test";
+        final String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
@@ -200,7 +198,7 @@ public class LdapAuthenticatorConfigurationControllerTest
 
         form.getConfiguration().setUrl("http://host:port?thisIsWrongUrl=true");
 
-        String url = getContextBaseUrl() + "/test";
+        final String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
@@ -229,7 +227,7 @@ public class LdapAuthenticatorConfigurationControllerTest
         subform.getUserSearch().setUserSearchBase("ou=Employee");
         subform.getUserSearch().setUserSearchFilter("(employee={0})");
 
-        String url = getContextBaseUrl() + "/test";
+        final String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
@@ -242,7 +240,7 @@ public class LdapAuthenticatorConfigurationControllerTest
     }
 
     @WithMockUser(authorities = "ADMIN")
-    @Test()
+    @Test
     public void ldapConfigurationTestShouldFailWithWithInvalidManagerDn()
     {
         LdapConfigurationTestForm form = getLdapConfigurationTestForm();
@@ -252,7 +250,7 @@ public class LdapAuthenticatorConfigurationControllerTest
         form.setUsername("mtodorov");
         form.setPassword("password");
 
-        String url = getContextBaseUrl() + "/test";
+        final String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
@@ -272,7 +270,7 @@ public class LdapAuthenticatorConfigurationControllerTest
         form.setUsername("daddy");
         form.setPassword("mummy");
 
-        String url = getContextBaseUrl() + "/test";
+        final String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
@@ -292,7 +290,7 @@ public class LdapAuthenticatorConfigurationControllerTest
         form.setUsername("mtodorov");
         form.setPassword("password");
 
-        String url = getContextBaseUrl() + "/test";
+        final String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
@@ -432,7 +430,7 @@ public class LdapAuthenticatorConfigurationControllerTest
                                           new ExternalRoleMapping("LogsManager", "LOGS_MANAGER"))
                                       .collect(Collectors.toList()));
 
-        String url = getContextBaseUrl() + "/test";
+        final String url = getContextBaseUrl() + "/test";
         mockMvc.accept(MediaType.APPLICATION_JSON_VALUE)
                .contentType(ContentType.JSON)
                .body(form)
@@ -451,7 +449,6 @@ public class LdapAuthenticatorConfigurationControllerTest
         LdapConfigurationTestForm form = new LdapConfigurationTestForm();
 
         LdapConfiguration configuration = ldapAuthenticationConfigurationManager.getConfiguration();
-
         form.setConfiguration(configuration);
         form.getConfiguration().setManagerDn("uid=admin,ou=system");
         form.getConfiguration().setManagerPassword("secret");
